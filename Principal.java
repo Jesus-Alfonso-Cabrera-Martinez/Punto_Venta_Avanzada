@@ -1,133 +1,174 @@
 package Capitulo6;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.List;
 
 public class Principal {
+    private static Inventario inventario;
+    private static PersistenciaDatos<Venta> persistenciaVentas;
+    private static List<Venta> ventas;
+
     public static void main(String[] args) throws IOException {
-        String[][] productos = Producto.CargarProductos();
-        String[][] ventas = CrearVenta();
-        Menu.MenuPrincipal(productos, ventas);
+        inventario = new Inventario("productos.csv", "productos.json");
+        persistenciaVentas = new PersistenciaDatos<>("ventas.csv", "ventas.json");
+        ventas = persistenciaVentas.cargarJSON(new com.google.gson.reflect.TypeToken<List<Venta>>(){}.getType());
+
+        if (ventas.isEmpty()) {
+            ventas = new java.util.ArrayList<>();
+        }
+
+        menuPrincipal();
     }
-    static String[][] productos;
-    static String[][] ventas;
-    static int tamventas = 100;
-    static String fecha;
-    public static boolean EsNumeroEntero(String dato) {
-        for (char c : dato.toCharArray()) {
-            if (!Character.isDigit(c)) {
-                return false;
+
+    private static void menuPrincipal() throws IOException {
+        String[] opciones = {"1.- Productos", "2.- Punto de Venta", "3.- Inventario", "4.- Ventas", "5.- Salir"};
+        String opcion;
+        do {
+            opcion = leerEntrada("Menú Principal:\n" + Mostrar.mostrarMenu(opciones) + "\nElige una opción:");
+            switch (opcion) {
+                case "1":
+                    menuProductos();
+                    break;
+                case "2":
+                    menuPuntoVenta();
+                    break;
+                case "3":
+                    menuInventario();
+                    break;
+                case "4":
+                    mostrarVentas();
+                    break;
+                case "5":
+                    System.out.println("Saliendo del sistema...");
+                    break;
+                default:
+                    System.out.println("Opción inválida.");
             }
-        }
-        return true;
+        } while (!opcion.equals("5"));
     }
-    public static boolean EsNumeroDouble(String dato) {
-        boolean valido = false;
-        for (char c : dato.toCharArray()) {
-            if (!Character.isDigit(c)) {
-                if (c == '.' && !valido) {
-                    valido = true;
-                } else {
-                    return false;
-                }
+
+    private static void menuProductos() throws IOException {
+        String[] opciones = {"1.- Listar productos", "2.- Agregar producto", "3.- Eliminar producto", "4.- Salir"};
+        String opcion;
+        do {
+            opcion = leerEntrada("Menú de Productos:\n" + Mostrar.mostrarMenu(opciones));
+            switch (opcion) {
+                case "1":
+                    System.out.println(Mostrar.mostrarListaProductos(inventario.obtenerProductos()));
+                    break;
+                case "2":
+                    agregarProducto();
+                    break;
+                case "3":
+                    eliminarProducto();
+                    break;
+                case "4":
+                    System.out.println("Saliendo del menú de productos...");
+                    break;
+                default:
+                    System.out.println("Opción inválida.");
             }
-        }
-        return valido;
+        } while (!opcion.equals("4"));
     }
-    public static boolean EvaluarNumerico(String dato, int tipo) {
-        boolean valido = false;
-        switch (tipo) {
-            case 1:
-                valido = EsNumeroEntero(dato);
-                break;
-            case 2:
-                valido = EsNumeroDouble(dato);
-                break;
-        }
-        return valido;
+
+    private static void agregarProducto() throws IOException {
+        String codigo = leerEntrada("Código del producto:");
+        String nombre = leerEntrada("Nombre del producto:");
+        double precio = Double.parseDouble(leerEntrada("Precio del producto:"));
+        int stock = Integer.parseInt(leerEntrada("Stock inicial:"));
+
+        Producto nuevoProducto = new Producto(codigo, nombre, precio, stock);
+        inventario.agregarProducto(nuevoProducto);
+        System.out.println("Producto agregado correctamente.");
     }
-    public static String Dialogo(String texto) throws IOException {
-        System.out.println(texto + " : ");
-        BufferedReader lectura = new BufferedReader(new InputStreamReader(System.in));
-        return lectura.readLine();
+
+    private static void eliminarProducto() throws IOException {
+        String codigo = leerEntrada("Código del producto a eliminar:");
+        inventario.eliminarProducto(codigo);
+        System.out.println("Producto eliminado correctamente.");
     }
-    public static String RellenarEspacios(String dato, int tamano) {
-        return String.format("%1$-" + tamano + "s", dato);
-    }
-    public static String Fecha() {
-        Date fecha = new Date();
-        SimpleDateFormat formatodia = new SimpleDateFormat("dd-MM-yyyy");
-        return formatodia.format(fecha);
-    }
-    public static int ObtenerUltimaPosicion(String[][] matriz) {
-        for (int i = matriz.length - 1; i >= 0; i--) {
-            if (matriz[i][0] != null && !matriz[i][0].isEmpty()) {
-                return i;
+
+    private static void menuInventario() throws IOException {
+        String[] opciones = {"1.- Listar inventario", "2.- Agregar stock", "3.- Salir"};
+        String opcion;
+        do {
+            opcion = leerEntrada("Menú de Inventario:\n" + Mostrar.mostrarMenu(opciones));
+            switch (opcion) {
+                case "1":
+                    System.out.println(Mostrar.mostrarListaProductos(inventario.obtenerProductos()));
+                    break;
+                case "2":
+                    agregarStock();
+                    break;
+                case "3":
+                    System.out.println("Saliendo del menú de inventario...");
+                    break;
+                default:
+                    System.out.println("Opción inválida.");
             }
-        }
-        return -1;
+        } while (!opcion.equals("3"));
     }
-    public static String[][] CrearVenta() {
-        return new String[tamventas][5];
+
+    private static void agregarStock() throws IOException {
+        String codigo = leerEntrada("Código del producto:");
+        int cantidad = Integer.parseInt(leerEntrada("Cantidad a agregar:"));
+        inventario.obtenerProductos().stream()
+                .filter(p -> p.getCodigo().equals(codigo))
+                .findFirst()
+                .ifPresent(p -> p.agregarStock(cantidad));
+        System.out.println("Stock actualizado.");
     }
-    public static void Eliminar(String[][] mticket, int tamt) throws IOException {
-        String codigo = Producto.Leer(Mostrar.MostrarTicket(mticket) + "\nIntroduce el codigo del producto");
-        if (codigo != null) {
-            int pos = Ticket.ExisteTicketCodigo(mticket, codigo);
-            if (pos > -1) {
-                Ticket.EliminarProductoTicket(mticket, pos);
+
+    private static void menuPuntoVenta() throws IOException {
+        String idVenta = "V" + (ventas.size() + 1);
+        Venta venta = new Venta(idVenta);
+
+        String opcion;
+        do {
+            System.out.println("Ticket actual:\n" + Mostrar.mostrarVenta(venta));
+            String[] opciones = {"1.- Agregar producto", "2.- Finalizar venta", "3.- Cancelar venta"};
+            opcion = leerEntrada("Menú de Venta:\n" + Mostrar.mostrarMenu(opciones));
+            switch (opcion) {
+                case "1":
+                    agregarProductoAVenta(venta);
+                    break;
+                case "2":
+                    finalizarVenta(venta);
+                    break;
+                case "3":
+                    System.out.println("Venta cancelada.");
+                    return;
+                default:
+                    System.out.println("Opción inválida.");
             }
-        } else {
-            System.out.println("Dato nulo");
-        }
+        } while (!opcion.equals("2") && !opcion.equals("3"));
     }
-    public static void Pagar(String idticket, String[][] mventa, String[][] mticket) {
-        int posventas = ObtenerUltimaPosicion(mventa);
-        int post = ObtenerUltimaPosicion(mticket);
-        if ((posventas + post) < 100) {
-            Producto.AgregarProductoAVenta(mticket, mventa, idticket);
-        } else {
-            System.out.println("Desbordamiento de Memoria de ventas");
-        }
+
+    private static void agregarProductoAVenta(Venta venta) throws IOException {
+        String codigo = leerEntrada("Código del producto:");
+        int cantidad = Integer.parseInt(leerEntrada("Cantidad:"));
+
+        inventario.obtenerProductos().stream()
+                .filter(p -> p.getCodigo().equals(codigo))
+                .findFirst()
+                .ifPresent(p -> venta.agregarProducto(p, cantidad));
     }
-    public static void AgregarStock(String[][] vproductos) throws IOException {
-        String codigo, cantidad;
-        int posicion;
-        String info = Mostrar.MostrarLista(vproductos);
-        codigo = Producto.Leer(info + "\nIntroduce el codigo del producto a modificar");
-        
-        if (codigo != null) {
-            posicion = Producto.ExisteProducto(codigo, vproductos);
-            if (posicion > -1) {
-                String[] vproducto = {vproductos[posicion][0], vproductos[posicion][1], vproductos[posicion][3]};
-                cantidad = Producto.Leer("\nIntroduce la Cantidad de Stock a Agregar" + Mostrar.MostrarProducto(vproducto));
-                
-                if (cantidad != null) {
-                    if (EvaluarNumerico(cantidad, 2) || EvaluarNumerico(cantidad, 1)) {
-                        String nuevacantidad = String.valueOf(Integer.valueOf(cantidad) + Integer.valueOf(vproductos[posicion][3]));
-                        vproductos[posicion][3] = nuevacantidad;
-                    } else {
-                        System.out.println("dato nulo");
-                    }
-                }
-            } else {
-                System.out.println("no existe el codigo");
-            }
-        } else {
-            System.out.println("dato nulo");
-        }
+
+    private static void finalizarVenta(Venta venta) {
+        ventas.add(venta);
+        persistenciaVentas.guardarJSON(ventas);
+        System.out.println("Venta finalizada:\n" + Mostrar.mostrarVenta(venta));
     }
-    public static String ObtenerUltimoValorVentas(String[][] ventas) {
-        String ultimoValor = "000";
-        
-        for (int i = ventas.length - 1; i >= 0; i--) {
-            if (ventas[i][0] != null && !ventas[i][0].isEmpty()) {
-                ultimoValor = ventas[i][0];
-                break;
-            }
-        }
-        return ultimoValor;
-    		}
-	}
+
+    private static void mostrarVentas() {
+        System.out.println(Mostrar.mostrarListaVentas(ventas));
+    }
+
+    private static String leerEntrada(String mensaje) throws IOException {
+        System.out.println(mensaje);
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        return br.readLine().trim();
+    }
+}

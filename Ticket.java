@@ -1,11 +1,14 @@
 package Capitulo6;
-public class Ticket{
+
+public class Ticket {
     public static String[][] CrearTicket() {
         return new String[20][4];
     }
+
     public static String UltimoTicket(int pos, String[][] mventa) {
         return pos > -1 ? mventa[pos][0] : "000";
     }
+
     public static int ExisteTicketCodigo(String[][] mticket, String codigo) {
         int pos = Principal.ObtenerUltimaPosicion(mticket);
         for (int i = 0; i <= pos; i++) {
@@ -15,6 +18,7 @@ public class Ticket{
         }
         return -1;
     }
+
     public static boolean InsertarProductoTicket(String[][] mticket, String[] datos, int tamticket) {
         int posticket = Principal.ObtenerUltimaPosicion(mticket);
         int enc = ExisteTicketCodigo(mticket, datos[0]);
@@ -33,6 +37,7 @@ public class Ticket{
         }
         return false;
     }
+
     public static double IvaTicket(String[][] mticket) {
         double subtotal = SubTotalTicket(mticket);
         return subtotal > 0 ? 0.16 * subtotal : -1;
@@ -42,6 +47,7 @@ public class Ticket{
         double total = SubTotalTicket(mticket);
         return total > 0 ? IvaTicket(mticket) + total : -1;
     }
+
     public static void RemoverProductoTicket(String[][] mticket, int pos) {
         int tam = Principal.ObtenerUltimaPosicion(mticket);
         if (tam > pos) {
@@ -53,6 +59,7 @@ public class Ticket{
             mticket[pos][0] = null;
         }
     }
+
     public static void EliminarProductoTicket(String[][] mticket, int pos) {
         int cantidad = Integer.parseInt(mticket[pos][3]);
         if (cantidad > 1) {
@@ -61,14 +68,16 @@ public class Ticket{
             RemoverProductoTicket(mticket, pos);
         }
     }
+
     public static double SubTotalTicket(String[][] mticket) {
         double subtotal = 0;
         int pos = Principal.ObtenerUltimaPosicion(mticket);
         for (int i = 0; i <= pos; i++) {
-            subtotal += Double.parseDouble(Producto.TotalProducto(mticket[i][2], mticket[i][3]));
+            subtotal += Double.parseDouble(Principal.TotalProducto(mticket[i][2], mticket[i][3]));
         }
         return subtotal;
     }
+
     public static String IdTicketSiguiente(String idticket) {
         int num = Integer.parseInt(idticket) + 1;
         if (num < 10) {
